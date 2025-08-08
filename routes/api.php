@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DestinationController;
 use App\Http\Controllers\Api\Admin\VerificationController;
 
 /*
@@ -11,21 +12,30 @@ use App\Http\Controllers\Api\Admin\VerificationController;
 |--------------------------------------------------------------------------
 */
 
-// rute untuk registrasi wisatawan
+// == RUTE OTENTIKASI ==
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register/pengelola', [AuthController::class, 'registerPengelola']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// rute untuk registrasi pengelola
-Route::post('/register/pengelola', [AuthController::class, 'registrasiPengelola']);
+// == RUTE PUBLIK (TIDAK PERLU LOGIN) ==
+Route::get('/destinations', [DestinationController::class, 'index']);
+Route::get('/destinations/{destination}', [DestinationController::class, 'show']);
 
-// rute verifikasi admin
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
-    Route::get('/verifications', [VerificationController::class, 'index']);
-    Route::post('/verifications/{id}/approve', [VerificationController::class, 'approve']);
-    Route::post('/verifications/{id}/reject', [VerificationController::class, 'reject']);
-});
+// == RUTE YANG MEMERLUKAN LOGIN (TERPROTEKSI) ==
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 
+    // Rute Destinasi yang butuh login (membuat, update, hapus)
+    Route::post('/destinations', [DestinationController::class, 'store']);
+    Route::put('/destinations/{destination}', [DestinationController::class, 'update']);
+    Route::delete('/destinations/{destination}', [DestinationController::class, 'destroy']);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+    // Grup Rute Khusus Admin
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/verifications', [VerificationController::class, 'index']);
+        Route::post('/verifications/{id}/approve', [VerificationController::class, 'approve']);
+        Route::post('/verifications/{id}/reject', [VerificationController::class, 'reject']);
+    });
 });
