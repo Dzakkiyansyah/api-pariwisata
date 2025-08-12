@@ -5,20 +5,22 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Destination;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DestinationController extends Controller
 {
     /**
-     * Menampilkan daftar semua destinasi.
+     * Menampilkan daftar semua destinasi yang sudah 'published'.
+     * Ini adalah endpoint publik.
      */
     public function index()
     {
-        $destinations = Destination::latest()->get();
+        $destinations = Destination::where('status', 'published')->latest()->get();
         return response()->json($destinations);
     }
 
     /**
-     * Menyimpan destinasi baru.
+     * Menyimpan destinasi baru oleh pengguna yang terotentikasi.
      */
     public function store(Request $request)
     {
@@ -28,20 +30,28 @@ class DestinationController extends Controller
             'address' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
-            'ticket_price' => 'required|integer',
+            'ticket_price' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
         ]);
 
-        $destination = $request->user()->destinations()->create($validated);
+        // Membuat destinasi dan langsung menghubungkannya dengan user yang sedang login
+        $destination = Auth::user()->destinations()->create($validated);
 
         return response()->json($destination, 201);
     }
 
     /**
      * Menampilkan satu destinasi spesifik.
+     * Ini adalah endpoint publik, namun dengan logika tambahan.
      */
     public function show(Destination $destination)
     {
+        // Logika: Jika statusnya bukan 'published', hanya pemilik atau admin yang boleh lihat.
+        // Jika tidak, tampilkan error 'Tidak Ditemukan'.
+        if ($destination->status !== 'published' && !(Auth::check() && (Auth::user()->hasRole('admin') || Auth::id() === $destination->user_id))) {
+            return response()->json(['message' => 'Destinasi tidak ditemukan.'], 404);
+        }
+
         return response()->json($destination);
     }
 
@@ -50,9 +60,9 @@ class DestinationController extends Controller
      */
     public function update(Request $request, Destination $destination)
     {
-        // Otorisasi: Pastikan user yang mengedit adalah pemilik destinasi.
-        if ($request->user()->id !== $destination->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        // Otorisasi: Pastikan user yang mengedit adalah pemilik destinasi ATAU seorang admin.
+        if (!Auth::user()->hasRole('admin') && Auth::id() !== $destination->user_id) {
+            return response()->json(['message' => 'Anda tidak memiliki izin untuk melakukan aksi ini.'], 403);
         }
 
         $validated = $request->validate([
@@ -61,8 +71,9 @@ class DestinationController extends Controller
             'address' => 'sometimes|required|string',
             'latitude' => 'sometimes|required|numeric',
             'longitude' => 'sometimes|required|numeric',
-            'ticket_price' => 'sometimes|required|integer',
+            'ticket_price' => 'sometimes|required|integer|min:0',
             'category_id' => 'sometimes|required|exists:categories,id',
+            'status' => 'sometimes|required|in:published,draft', // Admin bisa mengubah status
         ]);
 
         $destination->update($validated);
@@ -73,11 +84,10 @@ class DestinationController extends Controller
     /**
      * Menghapus destinasi.
      */
-    public function destroy(Request $request, Destination $destination)
+    public function destroy(Destination $destination)
     {
-        // Otorisasi: Pastikan user yang menghapus adalah pemilik destinasi.
-        if ($request->user()->id !== $destination->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!Auth::user()->hasRole('admin') && Auth::id() !== $destination->user_id) {
+            return response()->json(['message' => 'Anda tidak memiliki izin untuk melakukan aksi ini.'], 403);
         }
 
         $destination->delete();

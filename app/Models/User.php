@@ -8,11 +8,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Collection;
+use App\Models\Destination;
+
 
 /**
- * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Destination> $destinations
+ * @property Collection<int, Destination> $destinations
+ * @property Collection<int, Destination> $bookmarks
+ * @method bool hasRole(string $role)
  */
-
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
@@ -46,15 +50,15 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-
-
     ];
-
 
     public function destinations()
     {
         return $this->hasMany(Destination::class);
     }
 
-
+    public function bookmarks()
+    {
+        return $this->belongsToMany(Destination::class, 'bookmarks');
+    }
 }

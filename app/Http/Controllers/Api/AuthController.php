@@ -12,12 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    /**
-     * Handle user registration request.
-     */
     public function register(Request $request)
     {
-        // Validasi Input
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -27,20 +23,15 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // Buat User Baru
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        // Berikan Peran "wisatawan" secara otomatis
         $user->assignRole('wisatawan');
-
-        // Buat Token API (menggunakan Sanctum)
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Kembalikan Respon Sukses
         return response()->json([
             'message' => 'Registrasi berhasil',
             'access_token' => $token,
@@ -49,12 +40,8 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * Handle user login request.
-     */
     public function login(Request $request)
     {
-        // Validasi Input
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string',
@@ -64,18 +51,13 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // Coba Lakukan Otentikasi universal
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json(['message' => 'Kredensial tidak valid'], 401);
         }
 
-        // Jika berhasil, ambil data user
         $user = User::where('email', $request['email'])->firstOrFail();
-
-        // Buat Token API
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Kembalikan Respon Sukses
         return response()->json([
             'message' => 'Login berhasil',
             'access_token' => $token,
@@ -83,12 +65,9 @@ class AuthController extends Controller
             'user' => $user,
         ]);
     }
-    /**
-     * Handle Registrasi Pengelola
-     */
-    public function registrasiPengelola(Request $request)
+
+    public function registerPengelola(Request $request)
     {
-        // validasi Input dan file
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -100,28 +79,26 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
-        // Buat User Baru
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-        // Berikaan peran "pengelola"
+
         $user->assignRole('pengelola');
 
-        // Simpan Document yang di unggah
         $documentPath = $request->file('official_document')->store('documents','public');
 
-        // Buat entri baru di tabel aplikasi mitra
         MitraApplication::create([
             'user_id' => $user->id,
             'business_name' => $request->business_name,
-            'status' => 'pending', // status awal
+            'status' => 'pending',
             'official_document_path' => $documentPath,
         ]);
-        // kembalikan respon Sukses
+
         return response()->json([
-            'message' => 'Registrasi pengelola berhasil, Akun anda sedang dalam proses verifikasi.',
+            'message' => 'Pendaftaran sebagai pengelola berhasil. Akun Anda sedang menunggu verifikasi oleh Admin.',
             'user'=> $user,
         ], 201);
     }

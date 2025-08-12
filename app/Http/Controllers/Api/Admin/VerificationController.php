@@ -8,22 +8,23 @@ use Illuminate\Http\Request;
 
 class VerificationController extends Controller
 {
-    // Menampilkan semua pendaftar yang belum diverifikasi
+    // Menampilkan semua pendaftar yang statusnya 'pending'
     public function index()
     {
-        $applications = MitraApplication::with('user')-> where('status', 'pending') ->get();
+        $applications = MitraApplication::with('user')->where('status', 'pending')->get();
         return response()->json($applications);
     }
 
     // Menyetujui pendaftaran
     public function approve($id)
     {
-        $applications = MitraApplication:: findOrFail($id);
-        $applications->update(['status' => "approved"]);
+        // Menggunakan nama variabel tunggal '$application'
+        $application = MitraApplication::findOrFail($id);
+        $application->update(['status' => 'approved']);
 
         // notifikasi disetujui
-        return response()->json ([
-            'message' => 'Pendaftaran berhasil disetujui',
+        return response()->json([
+            'message' => 'Pendaftaran untuk ' . $application->business_name . ' berhasil disetujui.',
         ]);
     }
 
@@ -31,18 +32,19 @@ class VerificationController extends Controller
     public function reject(Request $request, $id)
     {
         $request->validate([
-            'notes' => 'required/string'
+            'notes' => 'required|string|max:1000'
         ]);
 
-        $applications = MitraApplication::findOrFail($id);
-        $applications->update([
+        // Menggunakan nama variabel tunggal
+        $application = MitraApplication::findOrFail($id);
+        $application->update([
             'status' => 'rejected',
             'notes' => $request->notes,
         ]);
 
         // notifikasi ditolak
         return response()->json([
-            'message' => 'Pendaftaran ditolak',
+            'message' => 'Pendaftaran untuk ' . $application->business_name . ' ditolak.',
         ]);
     }
 }

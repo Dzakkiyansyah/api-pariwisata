@@ -1,61 +1,113 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# API Platform Digital Pariwisata Kota Banda Aceh
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Ini adalah repositori untuk layanan backend (API) dari proyek skripsi "Platform Digital Pariwisata Kota Banda Aceh". API ini dibangun menggunakan Laravel dan dirancang untuk melayani aplikasi frontend (Next.js) dengan menyediakan semua data dan logika bisnis yang diperlukan.
 
-## About Laravel
+## ✨ Fitur Utama
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Sistem Otentikasi Berbasis Token:** Menggunakan Laravel Sanctum untuk otentikasi yang aman.
+- **Manajemen Peran & Izin (Multi-Peran):** Dibangun dengan `spatie/laravel-permission` untuk tiga peran utama:
+  - **Admin (Dinas Pariwisata):** Kontrol penuh atas seluruh sistem.
+  - **Pengelola:** Dapat mengelola informasi destinasi miliknya sendiri.
+  - **Wisatawan:** Pengguna terdaftar yang dapat berinteraksi dengan platform.
+- **Alur Verifikasi Pengelola:** Admin dapat menyetujui atau menolak pendaftaran pengelola baru.
+- **CRUD Penuh untuk Admin:**
+  - Manajemen Berita & Acara
+  - Manajemen Kategori Wisata
+  - Manajemen Pengguna
+- **Manajemen Konten oleh Pengelola:** Pengelola yang terverifikasi dapat membuat dan mengelola destinasi wisatanya.
+- **Fitur Interaksi Pengguna:**
+  - Memberikan ulasan dan rating pada destinasi.
+  - Menyimpan destinasi ke daftar favorit (*bookmark*).
+  - Mengelola profil pengguna.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Teknologi yang Digunakan
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Framework:** Laravel 11
+- **Database:** PostgreSQL
+- **Otentikasi:** Laravel Sanctum
+- **Manajemen Peran:** Spatie Laravel Permission
+- **Testing:** Postman
 
-## Learning Laravel
+## 🛠️ Panduan Instalasi
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1.  **Instal dependency Composer:**
+    ```bash
+    composer install
+    ```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+2.  **Buat file `.env`:**
+    * Salin file `.env.example` menjadi `.env`.
+    * Sesuaikan konfigurasi database PostgreSQL (`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3.  **Generate kunci aplikasi:**
+    ```bash
+    php artisan key:generate
+    ```
 
-## Laravel Sponsors
+4.  **Buat struktur database dan isi data awal:**
+    * Perintah ini akan membuat semua tabel dan mengisi data peran (roles).
+    ```bash
+    php artisan migrate:fresh --seed
+    ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+5.  **Buat tautan storage:**
+    ```bash
+    php artisan storage:link
+    ```
 
-### Premium Partners
+6.  **Jalankan server pengembangan:**
+    ```bash
+    php artisan serve
+    ```
+    API akan berjalan di `http://127.0.0.1:8000`.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Endpoints API
 
-## Contributing
+Berikut adalah daftar endpoint utama yang tersedia.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Otentikasi
+| Method | URL | Deskripsi |
+| :--- | :--- | :--- |
+| `POST` | `/api/register` | Registrasi untuk peran 'Wisatawan'. |
+| `POST` | `/api/register/pengelola` | Registrasi untuk peran 'Pengelola' (memerlukan unggah file). |
+| `POST` | `/api/login` | Login universal untuk semua peran. |
 
-## Code of Conduct
+### Rute Publik
+| Method | URL | Deskripsi |
+| :--- | :--- | :--- |
+| `GET` | `/api/destinations` | Melihat semua destinasi yang sudah di-*publish*. |
+| `GET` | `/api/destinations/{id}` | Melihat detail satu destinasi. |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Rute Pengguna Terotentikasi (`auth:sanctum`)
+| Method | URL | Deskripsi |
+| :--- | :--- | :--- |
+| `GET` | `/api/user` | Mendapatkan data pengguna yang sedang login. |
+| `POST` | `/api/destinations` | Pengelola membuat destinasi baru. |
+| `PUT` | `/api/destinations/{id}` | Pengelola/Admin mengupdate destinasi. |
+| `DELETE`| `/api/destinations/{id}` | Pengelola/Admin menghapus destinasi. |
+| `POST` | `/api/destinations/{id}/reviews`| Wisatawan memberikan ulasan. |
+| `POST` | `/api/destinations/{id}/bookmark`| Wisatawan menyimpan destinasi. |
+| `DELETE`| `/api/destinations/{id}/bookmark`| Wisatawan menghapus bookmark. |
+| `GET` | `/api/profile` | Wisatawan melihat profilnya. |
+| `PUT` | `/api/profile` | Wisatawan mengupdate profilnya. |
+| `PUT` | `/api/profile/password` | Wisatawan mengganti password. |
+| `POST` | `/api/destinations/{id}/photos`| Pengelola mengunggah foto. |
+| `DELETE`| `/destination-photos/{id}` | Pengelola menghapus foto. |
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Rute Khusus Admin (`role:admin`)
+| Method | URL | Deskripsi |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/verifications` | Melihat daftar pendaftar yang 'pending'. |
+| `POST` | `/api/admin/verifications/{id}/approve` | Menyetujui pendaftaran. |
+| `POST` | `/api/admin/verifications/{id}/reject` | Menolak pendaftaran. |
+| `GET` | `/api/admin/news` | Melihat semua berita. |
+| `POST` | `/api/admin/news` | Membuat berita baru. |
+| `PUT` | `/api/admin/news/{id}` | Mengupdate berita. |
+| `DELETE`| `/api/admin/news/{id}` | Menghapus berita. |
+| `...` | `/api/admin/categories` | CRUD untuk Kategori. |
+| `...` | `/api/admin/users` | CRUD untuk Pengguna. |
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Dibuat oleh **Dzakkivansyah**.
